@@ -2,6 +2,12 @@
 
 VercelPulse is a lightweight, native macOS Menu Bar application that provides a real-time overview of your Vercel projects, recent deployments, and resource usage statistics. 
 
+## 📦 Download
+You can download the pre-compiled, ready-to-use macOS application here:
+👉 **[Download VercelPulse.app (v1.0.0)](https://github.com/mnashed13/VercelPulse-MacApp/releases/download/v1.0.0/VercelPulse.zip)**
+
+Once downloaded, unzip the file and drag `VercelPulse.app` to your `/Applications` folder!
+
 ## Features
 - **Native macOS Experience:** Built using SwiftUI and AppKit, designed exclusively as a menu bar app (`LSUIElement`).
 - **Real-time Deployments:** View deployment statuses (Ready, Building, Error) across all your projects.
