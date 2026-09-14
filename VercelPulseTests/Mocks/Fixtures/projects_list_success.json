@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "id": "prj_storefront_001",
+      "name": "nextjs-storefront",
+      "framework": "nextjs",
+      "link": {
+        "type": "github",
+        "repo": "nextjs-storefront",
+        "org": "acmecorp"
+      }
+    },
+    {
+      "id": "prj_gateway_002",
+      "name": "api-gateway",
+      "framework": "node",
+      "link": {
+        "type": "github",
+        "repo": "api-gateway",
+        "org": "acmecorp"
+      }
+    },
+    {
+      "id": "prj_docs_003",
+      "name": "docs-portal",
+      "framework": "docusaurus",
+      "link": {
+        "type": "github",
+        "repo": "docs-portal",
+        "org": "acmecorp"
+      }
+    }
+  ]
+}

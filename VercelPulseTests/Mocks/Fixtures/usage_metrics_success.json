@@ -1,0 +1,16 @@
+{
+  "metrics": {
+    "bandwidth": {
+      "limit": 1073741824000,
+      "usage": 214748364800
+    },
+    "serverlessFunctionExecution": {
+      "limit": 1000000,
+      "usage": 450000
+    },
+    "edgeRequests": {
+      "limit": 5000000,
+      "usage": 1250000
+    }
+  }
+}

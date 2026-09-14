@@ -21,3 +21,5 @@ DerivedData
 
 # macOS
 .DS_Store
+*.profraw
+*.profdata

@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Too many requests. Rate limit exceeded for endpoint /v6/deployments"
+  }
+}
