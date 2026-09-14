@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		4874017230283FD100A3ABA2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4874015730283FD100A3ABA2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4874015E30283FD100A3ABA2;
+			remoteInfo = VercelPulse;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		4874015F30283FD100A3ABA2 /* VercelPulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VercelPulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4874017030283FD100A3ABA2 /* VercelPulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VercelPulseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = VercelPulse;
 			sourceTree = "<group>";
 		};
+		4874017130283FD100A3ABA2 /* VercelPulseTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VercelPulseTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4874015C30283FD100A3ABA2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4874017530283FD100A3ABA2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				4874016130283FD100A3ABA2 /* VercelPulse */,
+				4874017130283FD100A3ABA2 /* VercelPulseTests */,
 				4874016030283FD100A3ABA2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				4874015F30283FD100A3ABA2 /* VercelPulse.app */,
+				4874017030283FD100A3ABA2 /* VercelPulseTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = 4874015F30283FD100A3ABA2 /* VercelPulse.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4874017730283FD100A3ABA2 /* VercelPulseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4874017830283FD300A3ABA2 /* Build configuration list for PBXNativeTarget "VercelPulseTests" */;
+			buildPhases = (
+				4874017430283FD100A3ABA2 /* Sources */,
+				4874017530283FD100A3ABA2 /* Frameworks */,
+				4874017630283FD100A3ABA2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4874017330283FD100A3ABA2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4874017130283FD100A3ABA2 /* VercelPulseTests */,
+			);
+			name = VercelPulseTests;
+			packageProductDependencies = (
+			);
+			productName = VercelPulseTests;
+			productReference = 4874017030283FD100A3ABA2 /* VercelPulseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					4874015E30283FD100A3ABA2 = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					4874017730283FD100A3ABA2 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 4874015E30283FD100A3ABA2;
 					};
 				};
 			};
@@ -100,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				4874015E30283FD100A3ABA2 /* VercelPulse */,
+				4874017730283FD100A3ABA2 /* VercelPulseTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		4874015D30283FD100A3ABA2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4874017630283FD100A3ABA2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4874017430283FD100A3ABA2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4874017330283FD100A3ABA2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4874015E30283FD100A3ABA2 /* VercelPulse */;
+			targetProxy = 4874017230283FD100A3ABA2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		4874016830283FD300A3ABA2 /* Debug */ = {
@@ -255,6 +330,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "VercelPulse-Info.plist";
 				INFOPLIST_KEY_LSUIElement = YES;
 				CODE_SIGN_ENTITLEMENTS = VercelPulse/VercelPulse.entitlements;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -287,6 +363,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "VercelPulse-Info.plist";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -303,6 +380,62 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4874017930283FD300A3ABA2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Monarch.VercelPulseTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VercelPulse.app/Contents/MacOS/VercelPulse";
+			};
+			name = Debug;
+		};
+		4874017A30283FD300A3ABA2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Monarch.VercelPulseTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VercelPulse.app/Contents/MacOS/VercelPulse";
 			};
 			name = Release;
 		};
@@ -323,6 +456,15 @@
 			buildConfigurations = (
 				4874016B30283FD300A3ABA2 /* Debug */,
 				4874016C30283FD300A3ABA2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4874017830283FD300A3ABA2 /* Build configuration list for PBXNativeTarget "VercelPulseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4874017930283FD300A3ABA2 /* Debug */,
+				4874017A30283FD300A3ABA2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

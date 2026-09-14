@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Invalid or expired token provided in Authorization header"
+  }
+}

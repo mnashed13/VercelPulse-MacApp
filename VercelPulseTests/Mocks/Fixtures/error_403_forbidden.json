@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "forbidden",
+    "message": "User does not have permission to access this team workspace"
+  }
+}

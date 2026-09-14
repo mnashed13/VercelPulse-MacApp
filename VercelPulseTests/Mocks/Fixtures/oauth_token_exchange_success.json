@@ -1,0 +1,9 @@
+{
+  "token_type": "Bearer",
+  "access_token": "vcp_tok_test_abc123456789xyz",
+  "refresh_token": "vcp_ref_test_987654321zyx",
+  "expires_in": 86400,
+  "scope": "deployments:read projects:read usage:read",
+  "team_id": "team_alpha_prod_001",
+  "user_id": "usr_dev_johndoe_42"
+}

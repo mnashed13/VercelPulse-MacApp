@@ -1,0 +1,26 @@
+{
+  "deployments": [
+    {
+      "uid": "dpl_page2_item1",
+      "name": "dashboard-app",
+      "url": "dashboard-app-page2.vercel.app",
+      "state": "READY",
+      "created": 1725180000000,
+      "creator": {
+        "username": "lead_frontend"
+      },
+      "meta": {
+        "githubCommitMessage": "page 2 item 1 commit",
+        "githubCommitRef": "main",
+        "githubCommitSha": "3333333333333333333333333333333333333333",
+        "githubCommitAuthorName": "Alice"
+      },
+      "target": "production"
+    }
+  ],
+  "pagination": {
+    "count": 1,
+    "next": null,
+    "prev": 1725180000000
+  }
+}
