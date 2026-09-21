@@ -8,6 +8,9 @@ public struct PopoverView: View {
     
     @State private var isSpinningRefresh = false
     @State private var showingSettingsSheet = false
+    @State private var isRefreshHovered = false
+    @State private var isDashboardHovered = false
+    @State private var isGearHovered = false
     
     public init(viewModel: DashboardViewModel) {
         self.viewModel = viewModel
@@ -49,14 +52,14 @@ public struct PopoverView: View {
         }
     }
     
-    // MARK: - Header
+    // MARK: - Header & Toolbar
     
     private var headerView: some View {
         HStack(spacing: 8) {
-            // Logo & Title
+            // Logo, Title & Status Indicator
             HStack(spacing: 6) {
                 Image(systemName: "triangle.fill")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Text("VercelPulse")
@@ -67,50 +70,97 @@ public struct PopoverView: View {
             
             Spacer()
             
-            // Manual Refresh Button
-            Button(action: {
-                triggerManualRefresh()
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .medium))
-                    .rotationEffect(.degrees(isSpinningRefresh ? 360 : 0))
-                    .animation(
-                        isSpinningRefresh ? Animation.linear(duration: 0.8).repeatForever(autoreverses: false) : .default,
-                        value: isSpinningRefresh
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(viewModel.isLoading)
-            .help("Refresh Deployments")
-            
-            // Web Dashboard Quick Link
-            Button(action: {
-                let targetURL: URL
-                if let team = viewModel.effectiveTeamSlug, !team.isEmpty {
-                    targetURL = URL(string: "https://vercel.com/\(team)")!
-                } else {
-                    targetURL = URL(string: "https://vercel.com")!
+            // Action Buttons
+            HStack(spacing: 2) {
+                // Manual Refresh Button
+                Button(action: {
+                    triggerManualRefresh()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 12, weight: .medium))
+                        .symbolEffect(.rotate, isActive: isSpinningRefresh || viewModel.isLoading)
+                        .foregroundColor(viewModel.isLoading ? .secondary.opacity(0.4) : (isRefreshHovered ? .primary : .secondary))
+                        .frame(width: 26, height: 26)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isRefreshHovered && !viewModel.isLoading ? Color.primary.opacity(0.08) : Color.clear)
+                        )
+                        .contentShape(Rectangle())
                 }
-                VercelDeepLinkHelper.openInBrowser(targetURL)
-            }) {
-                Image(systemName: "arrow.up.right.square")
-                    .font(.system(size: 11, weight: .medium))
+                .buttonStyle(.plain)
+                .disabled(viewModel.isLoading)
+                .keyboardShortcut("r", modifiers: .command)
+                .onHover { isRefreshHovered = $0 }
+                .help("Refresh Deployments (⌘R)")
+                
+                // Web Dashboard Quick Link
+                Button(action: {
+                    openWebDashboard()
+                }) {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isDashboardHovered ? .primary : .secondary)
+                        .frame(width: 26, height: 26)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isDashboardHovered ? Color.primary.opacity(0.08) : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("o", modifiers: .command)
+                .onHover { isDashboardHovered = $0 }
+                .help("Open Vercel Web Dashboard (⌘O)")
+                
+                // Settings & App Commands Menu
+                Menu {
+                    Button {
+                        openSettings()
+                    } label: {
+                        Label("Settings...", systemImage: "gearshape")
+                    }
+                    .keyboardShortcut(",", modifiers: .command)
+                    
+                    Button {
+                        openWebDashboard()
+                    } label: {
+                        Label("Open Vercel Dashboard", systemImage: "arrow.up.right.square")
+                    }
+                    
+                    Button {
+                        triggerManualRefresh()
+                    } label: {
+                        Label("Refresh Deployments", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(viewModel.isLoading)
+                    
+                    Divider()
+                    
+                    Button(role: .destructive) {
+                        NSApplication.shared.terminate(nil)
+                    } label: {
+                        Label("Quit VercelPulse", systemImage: "power")
+                    }
+                    .keyboardShortcut("q", modifiers: .command)
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isGearHovered ? .primary : .secondary)
+                        .frame(width: 26, height: 26)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isGearHovered ? Color.primary.opacity(0.08) : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .onHover { isGearHovered = $0 }
+                .help("Settings & Options")
             }
-            .buttonStyle(.plain)
-            .help("Open Vercel Web Dashboard")
-            
-            // Settings Button
-            Button(action: {
-                openSettings()
-            }) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 11, weight: .medium))
-            }
-            .buttonStyle(.plain)
-            .help("Settings")
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(Color(NSColor.windowBackgroundColor))
     }
     
@@ -345,6 +395,16 @@ public struct PopoverView: View {
                 isSpinningRefresh = false
             }
         }
+    }
+    
+    private func openWebDashboard() {
+        let targetURL: URL
+        if let team = viewModel.effectiveTeamSlug, !team.isEmpty {
+            targetURL = URL(string: "https://vercel.com/\(team)")!
+        } else {
+            targetURL = URL(string: "https://vercel.com")!
+        }
+        VercelDeepLinkHelper.openInBrowser(targetURL)
     }
     
     private func openSettings() {

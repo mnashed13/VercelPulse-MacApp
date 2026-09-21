@@ -5,7 +5,7 @@ struct VercelPulseApp: App {
     @StateObject private var viewModel = DashboardViewModel()
     
     var body: some Scene {
-        MenuBarExtra("VercelPulse", systemImage: viewModel.menuBarSystemImage) {
+        MenuBarExtra {
             PopoverView(viewModel: viewModel)
                 .onOpenURL { url in
                     Task {
@@ -25,6 +25,9 @@ struct VercelPulseApp: App {
                         }
                     }
                 }
+        } label: {
+            Image(systemName: viewModel.menuBarSystemImage)
+                .accessibilityLabel("VercelPulse")
         }
         .menuBarExtraStyle(.window)
     }

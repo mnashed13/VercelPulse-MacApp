@@ -92,6 +92,18 @@ public struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
                 
+                Button(role: .destructive, action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "power")
+                        Text("Quit App")
+                    }
+                    .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Quit VercelPulse (⌘Q)")
+                
                 Spacer()
                 
                 Button("Close") {
