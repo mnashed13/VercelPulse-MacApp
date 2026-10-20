@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Orb setup for VercelPulse (macOS SwiftUI menu bar app).
+#
+# This repo is an Xcode project that only builds on macOS with Xcode 14+
+# (deployment target macOS 26.5). Orbs run Debian 12 (Linux), so nothing here
+# can build or run the app. What a Linux orb CAN do is read, edit, and lint the
+# Swift sources, so setup installs standalone SwiftLint and SwiftFormat builds
+# that run without a Swift toolchain. There are no package managers, lockfiles,
+# or backing services in this repository.
+
+log() { printf '[setup %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
+
+SWIFTLINT_VERSION="0.65.1"
+SWIFTFORMAT_VERSION="0.64.0"
+BIN_DIR="/usr/local/bin"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+install_swiftlint() {
+    if [ "$(swiftlint version 2>/dev/null)" = "$SWIFTLINT_VERSION" ]; then
+        log "SwiftLint $SWIFTLINT_VERSION already installed"
+        return
+    fi
+    log "Installing SwiftLint $SWIFTLINT_VERSION (static Linux build)"
+    curl -sSL --max-time 300 \
+        -o "$TMP_DIR/swiftlint.zip" \
+        "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT_VERSION/swiftlint_linux_amd64.zip"
+    unzip -o -q "$TMP_DIR/swiftlint.zip" -d "$TMP_DIR/swiftlint"
+    install -m 755 "$TMP_DIR/swiftlint/swiftlint-static" "$BIN_DIR/swiftlint"
+    log "SwiftLint $(swiftlint version) installed"
+}
+
+install_swiftformat() {
+    if [ "$(swiftformat --version 2>/dev/null | awk '{print $NF}')" = "$SWIFTFORMAT_VERSION" ]; then
+        log "SwiftFormat $SWIFTFORMAT_VERSION already installed"
+        return
+    fi
+    log "Installing SwiftFormat $SWIFTFORMAT_VERSION (static Linux build)"
+    curl -sSL --max-time 300 \
+        -o "$TMP_DIR/swiftformat.zip" \
+        "https://github.com/nicklockwood/SwiftFormat/releases/download/$SWIFTFORMAT_VERSION/swiftformat_linux.zip"
+    unzip -o -q "$TMP_DIR/swiftformat.zip" -d "$TMP_DIR/swiftformat"
+    install -m 755 "$TMP_DIR/swiftformat/swiftformat_linux" "$BIN_DIR/swiftformat"
+    log "SwiftFormat $(swiftformat --version | awk '{print $NF}') installed"
+}
+
+install_swiftlint
+install_swiftformat
+
+# Orb-specific agent guidance: tell future agents what is and is not possible
+# in this Linux orb. Guarded append so repeat runs are idempotent.
+AGENTS_CONFIG="$HOME/.config/amp/AGENTS.md"
+GUIDANCE_MARKER="# VercelPulse orb guidance"
+if ! grep -Fqx "$GUIDANCE_MARKER" "$AGENTS_CONFIG" 2>/dev/null; then
+    mkdir -p "$(dirname "$AGENTS_CONFIG")"
+    cat >> "$AGENTS_CONFIG" <<EOF
+
+$GUIDANCE_MARKER
+- VercelPulse is a macOS-only SwiftUI app (Xcode project, deployment target
+  macOS 26.5). This orb runs Linux: \`xcodebuild\`, \`swift build\`, and the
+  XCTest suite cannot run here. Do not try to install Xcode or the Swift
+  toolchain.
+- For Swift syntax and style diagnostics, use the installed static binaries:
+  \`swiftlint lint VercelPulse VercelPulseTests\` and
+  \`swiftformat --lint VercelPulse\`. They parse Swift natively; no Swift
+  toolchain is installed or needed.
+- The app has no package dependencies, no lockfiles, and no backing services.
+  Its secrets (Vercel token, OAuth client config) live in the macOS Keychain
+  and are only entered by the user in the app on macOS.
+EOF
+    log "Added orb guidance to $AGENTS_CONFIG"
+else
+    log "Orb guidance already present in $AGENTS_CONFIG"
+fi
+
+log "Setup complete"

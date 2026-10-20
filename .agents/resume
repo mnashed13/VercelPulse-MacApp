@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Nothing to re-authenticate or reconnect for this repository: there are no
+# backing services, tunnels, or thread-scoped credentials. SwiftLint and
+# SwiftFormat are static binaries installed by .agents/setup into
+# /usr/local/bin, which the snapshot preserves across pause/resume.
+#
+# Keep a cheap health check so a broken snapshot surfaces immediately rather
+# than failing confusingly mid-task.
+
+if ! command -v swiftlint >/dev/null 2>&1 || ! command -v swiftformat >/dev/null 2>&1; then
+    echo "VercelPulse orb resume: SwiftLint/SwiftFormat missing from PATH; rerun .agents/setup" >&2
+    exit 1
+fi
