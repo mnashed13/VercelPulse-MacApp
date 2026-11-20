@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Main macOS Menu Bar popover view housing the deployment dashboard, filter controls,
-/// live pulse indicator, error alerts, and usage analytics.
+/// Main macOS Menu Bar popover view styled with macOS Liquid Glass, housing the deployment
+/// dashboard, segmented scope filter, live pulse pill, error banners, and usage analytics.
 public struct PopoverView: View {
     @ObservedObject public var viewModel: DashboardViewModel
     @Environment(\.openWindow) private var openWindow
@@ -15,10 +15,11 @@ public struct PopoverView: View {
     
     public var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Header & Toolbar
+            // MARK: - Floating Liquid Glass Header
             headerView
             
-            Divider()
+            LiquidGlassDivider()
+                .padding(.horizontal, 12)
             
             // MARK: - Body Content
             if !viewModel.isAuthenticated {
@@ -38,125 +39,203 @@ public struct PopoverView: View {
                 authenticatedDashboardView
             }
             
-            Divider()
+            LiquidGlassDivider()
+                .padding(.horizontal, 12)
             
-            // MARK: - Footer Status Bar
+            // MARK: - Translucent Glass Footer
             footerView
         }
-        .frame(width: 360, height: 510)
+        .frame(width: 392, height: 556)
+        .background {
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                
+                // Subtle top specular light bloom for depth
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.08),
+                        Color.clear,
+                        Color.black.opacity(0.04)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .ignoresSafeArea()
+        }
         .sheet(isPresented: $showingSettingsSheet) {
             SettingsView(viewModel: viewModel)
         }
     }
     
-    // MARK: - Header
+    // MARK: - Floating Liquid Glass Header
     
     private var headerView: some View {
         HStack(spacing: 8) {
-            // Logo & Title
-            HStack(spacing: 6) {
-                Image(systemName: "triangle.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.primary)
-                
-                Text("VercelPulse")
-                    .font(.system(size: 13, weight: .bold))
-                
-                pulseSyncDot
-            }
-            
-            Spacer()
-            
-            // Manual Refresh Button
-            Button(action: {
-                triggerManualRefresh()
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .medium))
-                    .rotationEffect(.degrees(isSpinningRefresh ? 360 : 0))
-                    .animation(
-                        isSpinningRefresh ? Animation.linear(duration: 0.8).repeatForever(autoreverses: false) : .default,
-                        value: isSpinningRefresh
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(viewModel.isLoading)
-            .help("Refresh Deployments")
-            
-            // Web Dashboard Quick Link
-            Button(action: {
-                let targetURL: URL
-                if let team = viewModel.effectiveTeamSlug, !team.isEmpty {
-                    targetURL = URL(string: "https://vercel.com/\(team)")!
-                } else {
-                    targetURL = URL(string: "https://vercel.com")!
+            // Official Vercel Logo Badge, Title & Live Status Capsule
+            HStack(spacing: 8) {
+                ZStack {
+                    VercelLogoView(size: 11, color: .primary)
+                        .offset(y: -0.5)
                 }
-                VercelDeepLinkHelper.openInBrowser(targetURL)
-            }) {
-                Image(systemName: "arrow.up.right.square")
-                    .font(.system(size: 11, weight: .medium))
+                .frame(width: 26, height: 26)
+                .glassEffect(.regular, in: .circle)
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text("VercelPulse")
+                            .font(.system(size: 13.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+                        
+                        pulseSyncPill
+                    }
+                }
             }
-            .buttonStyle(.plain)
-            .help("Open Vercel Web Dashboard")
             
-            // Settings Button
-            Button(action: {
-                openSettings()
-            }) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 11, weight: .medium))
+            Spacer(minLength: 6)
+            
+            // Liquid Glass Toolbar Cluster
+            GlassEffectContainer(spacing: 6) {
+                HStack(spacing: 5) {
+                    // Manual Refresh Button
+                    Button(action: {
+                        triggerManualRefresh()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 11.5, weight: .semibold))
+                            .symbolEffect(.rotate, isActive: isSpinningRefresh || viewModel.isLoading)
+                            .foregroundStyle(viewModel.isLoading ? .tertiary : .primary)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .liquidGlassCircleControl()
+                    .disabled(viewModel.isLoading)
+                    .keyboardShortcut("r", modifiers: .command)
+                    .help("Refresh Deployments (⌘R)")
+                    
+                    // Web Dashboard Quick Link
+                    Button(action: {
+                        openWebDashboard()
+                    }) {
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 11.5, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .liquidGlassCircleControl()
+                    .keyboardShortcut("o", modifiers: .command)
+                    .help("Open Vercel Web Dashboard (⌘O)")
+                    
+                    // Settings & App Commands Menu
+                    Menu {
+                        Button {
+                            openSettings()
+                        } label: {
+                            Label("Settings...", systemImage: "gearshape")
+                        }
+                        .keyboardShortcut(",", modifiers: .command)
+                        
+                        Button {
+                            openWebDashboard()
+                        } label: {
+                            Label("Open Vercel Dashboard", systemImage: "arrow.up.right.square")
+                        }
+                        
+                        Button {
+                            triggerManualRefresh()
+                        } label: {
+                            Label("Refresh Deployments", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(viewModel.isLoading)
+                        
+                        Divider()
+                        
+                        Button(role: .destructive) {
+                            NSApplication.shared.terminate(nil)
+                        } label: {
+                            Label("Quit VercelPulse", systemImage: "power")
+                        }
+                        .keyboardShortcut("q", modifiers: .command)
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 11.5, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Circle())
+                            .liquidGlassCircleControl()
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("Settings & Options")
+                }
             }
-            .buttonStyle(.plain)
-            .help("Settings")
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(NSColor.windowBackgroundColor))
     }
     
-    // MARK: - Pulse Sync Indicator
+    // MARK: - Pulse Sync Pill
     
     @ViewBuilder
-    private var pulseSyncDot: some View {
-        HStack(spacing: 4) {
+    private var pulseSyncPill: some View {
+        let indicatorColor: Color = {
             if viewModel.deployments.isEmpty && viewModel.isLoading {
-                Circle()
-                    .fill(Color.blue)
-                    .frame(width: 6, height: 6)
-                Text("Syncing...")
-                    .font(.system(size: 10))
-                    .foregroundColor(.blue)
+                return .blue
             } else if viewModel.errorMessage != nil && viewModel.deployments.isEmpty {
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 6, height: 6)
-                Text("Error")
-                    .font(.system(size: 10))
-                    .foregroundColor(.red)
+                return .red
             } else {
-                Circle()
-                    .fill(viewModel.pulseStatusColor)
-                    .frame(width: 6, height: 6)
-                Text(viewModel.pulseStatusText)
-                    .font(.system(size: 10, weight: viewModel.hasActiveBuilds ? .medium : .regular))
-                    .foregroundColor(viewModel.hasActiveBuilds || viewModel.pulseStatusColor == Color.red ? viewModel.pulseStatusColor : .secondary)
+                return viewModel.pulseStatusColor
             }
+        }()
+        
+        let statusText: String = {
+            if viewModel.deployments.isEmpty && viewModel.isLoading {
+                return "Syncing"
+            } else if viewModel.errorMessage != nil && viewModel.deployments.isEmpty {
+                return "Error"
+            } else {
+                return viewModel.pulseStatusText
+            }
+        }()
+        
+        HStack(spacing: 4) {
+            Circle()
+                .fill(indicatorColor)
+                .frame(width: 6, height: 6)
+                .shadow(color: indicatorColor.opacity(0.65), radius: 3, x: 0, y: 0)
+            
+            Text(statusText)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(
+                    viewModel.hasActiveBuilds || indicatorColor == .red
+                        ? indicatorColor
+                        : .secondary
+                )
+                .lineLimit(1)
         }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 2.5)
+        .glassEffect(.regular.tint(indicatorColor.opacity(0.14)), in: .capsule)
     }
     
     // MARK: - Authenticated Dashboard
     
     private var authenticatedDashboardView: some View {
-        VStack(spacing: 8) {
-            // Scope Filter Bar
+        VStack(spacing: 10) {
+            // Segmented Liquid Glass Scope Filter Bar
             FilterScopeBar(
                 selectedScope: $viewModel.selectedScope,
                 allCount: viewModel.allCount,
                 prodCount: viewModel.productionCount,
                 prevCount: viewModel.previewCount
             )
-            .padding(.horizontal, 10)
-            .padding(.top, 8)
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
             
             // Error Banner (if any)
             if let error = viewModel.activeAPIError {
@@ -176,7 +255,7 @@ public struct PopoverView: View {
                         viewModel.errorMessage = nil
                     }
                 )
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 12)
             } else if let errorMsg = viewModel.errorMessage {
                 ErrorBannerView(
                     errorMessage: errorMsg,
@@ -193,7 +272,7 @@ public struct PopoverView: View {
                         viewModel.errorMessage = nil
                     }
                 )
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 12)
             }
             
             // Deployment List or Empty/Loading States
@@ -201,9 +280,10 @@ public struct PopoverView: View {
                 VStack(spacing: 12) {
                     Spacer()
                     ProgressView()
+                        .controlSize(.regular)
                     Text("Fetching deployments...")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -211,7 +291,7 @@ public struct PopoverView: View {
                 emptyStateView
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(spacing: 10) {
                         ForEach(viewModel.filteredDeployments) { deployment in
                             DeploymentCardView(
                                 deployment: deployment,
@@ -223,27 +303,29 @@ public struct PopoverView: View {
                         
                         // Workspace Usage Section
                         if let usage = viewModel.usage {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Divider()
-                                    .padding(.vertical, 4)
-                                
-                                HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 5) {
                                     Image(systemName: "chart.bar.fill")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.secondary)
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundStyle(.secondary)
                                     Text("Account Usage")
-                                        .font(.system(size: 11, weight: .bold))
-                                        .foregroundColor(.secondary)
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
                                 }
+                                .padding(.horizontal, 4)
+                                .padding(.top, 4)
                                 
                                 UsageMetricsView(usage: usage)
                             }
-                            .padding(.top, 4)
+                            .padding(.top, 2)
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 2)
+                    .padding(.bottom, 12)
                 }
+                .scrollIndicators(.hidden)
             }
         }
     }
@@ -251,35 +333,41 @@ public struct PopoverView: View {
     // MARK: - Empty State
     
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Spacer()
             
-            Image(systemName: "shippingbox")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary.opacity(0.6))
+            ZStack {
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 54, height: 54)
+            .glassEffect(.regular, in: .circle)
             
             VStack(spacing: 4) {
                 Text("No \(viewModel.selectedScope.title.lowercased()) deployments")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
                 
                 Text("Deployments pushed to Vercel will appear here automatically.")
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 28)
             }
             
             Button(action: {
                 triggerManualRefresh()
             }) {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Image(systemName: "arrow.clockwise")
                     Text("Refresh")
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 11.5, weight: .semibold))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.glass)
             
             Spacer()
         }
@@ -289,33 +377,44 @@ public struct PopoverView: View {
     // MARK: - Footer
     
     private var footerView: some View {
-        HStack {
-            // Workspace / Team Indicator
-            HStack(spacing: 4) {
+        HStack(spacing: 8) {
+            // Workspace / Team Pill
+            HStack(spacing: 5) {
                 Image(systemName: "building.2")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundStyle(.secondary)
                 
                 Text(workspaceTitle)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3.5)
+            .glassEffect(.regular, in: .capsule)
             
             Spacer()
             
-            // Polling interval badge
-            HStack(spacing: 3) {
-                Image(systemName: "timer")
-                    .font(.system(size: 9))
+            // Adaptive Polling Interval Pill
+            HStack(spacing: 4) {
+                Image(systemName: viewModel.hasActiveBuilds ? "bolt.fill" : "timer")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(viewModel.hasActiveBuilds ? .blue : .secondary)
                 Text(pollingStatusText)
-                    .font(.system(size: 9, design: .monospaced))
+                    .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(viewModel.hasActiveBuilds ? .primary : .secondary)
             }
-            .foregroundColor(.secondary.opacity(0.8))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3.5)
+            .glassEffect(
+                viewModel.hasActiveBuilds
+                    ? .regular.tint(Color.blue.opacity(0.14))
+                    : .regular,
+                in: .capsule
+            )
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color(NSColor.windowBackgroundColor))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
     
     // MARK: - Helpers
@@ -325,14 +424,14 @@ public struct PopoverView: View {
             return team
         }
         if let user = viewModel.currentUsername, !user.isEmpty {
-            return "User: \(user)"
+            return user
         }
         return "Personal Workspace"
     }
     
     private var pollingStatusText: String {
         if viewModel.hasActiveBuilds {
-            return "10s (Active)"
+            return "10s Active"
         }
         return "\(Int(viewModel.currentPollingInterval))s"
     }
@@ -345,6 +444,16 @@ public struct PopoverView: View {
                 isSpinningRefresh = false
             }
         }
+    }
+    
+    private func openWebDashboard() {
+        let targetURL: URL
+        if let team = viewModel.effectiveTeamSlug, !team.isEmpty {
+            targetURL = URL(string: "https://vercel.com/\(team)")!
+        } else {
+            targetURL = URL(string: "https://vercel.com")!
+        }
+        VercelDeepLinkHelper.openInBrowser(targetURL)
     }
     
     private func openSettings() {

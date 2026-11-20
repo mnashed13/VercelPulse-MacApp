@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Displays Vercel account and workspace usage metrics.
+/// Displays Vercel account and workspace usage metrics inside a Liquid Glass card.
 public struct UsageMetricsView: View {
     public let usage: Usage
     
@@ -9,7 +9,7 @@ public struct UsageMetricsView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             if let metrics = usage.metrics, !metrics.isEmpty {
                 ForEach(Array(metrics.keys.sorted()), id: \.self) { key in
                     if let detail = metrics[key], let current = detail.usage, let limit = detail.limit {
@@ -19,19 +19,12 @@ public struct UsageMetricsView: View {
             } else {
                 Text("No detailed usage metrics available.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding(.vertical, 4)
             }
         }
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(NSColor.controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-        )
+        .padding(12)
+        .liquidGlassCard(cornerRadius: 16)
     }
     
     private func formatKey(_ key: String) -> String {
@@ -39,7 +32,7 @@ public struct UsageMetricsView: View {
     }
 }
 
-/// A single row representing a metric with progress bar and formatted limits.
+/// A single row representing a metric with a smooth Liquid Glass progress bar and formatted limits.
 public struct MetricRow: View {
     public let title: String
     public let usage: Int
@@ -67,31 +60,41 @@ public struct MetricRow: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 5) {
             HStack {
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 Text("\(formatNumber(usage)) / \(formatNumber(limit))")
-                    .font(.system(size: 10, weight: .regular, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.secondary)
             }
             
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
+                    Capsule()
                         .fill(Color.primary.opacity(0.08))
-                        .frame(height: 5)
+                        .frame(height: 6)
                     
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(progressColor)
-                        .frame(width: geometry.size.width * CGFloat(progressRatio), height: 5)
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    progressColor.opacity(0.85),
+                                    progressColor
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(6, geometry.size.width * CGFloat(progressRatio)), height: 6)
+                        .shadow(color: progressColor.opacity(0.35), radius: 3, x: 0, y: 0)
                 }
             }
-            .frame(height: 5)
+            .frame(height: 6)
         }
     }
     

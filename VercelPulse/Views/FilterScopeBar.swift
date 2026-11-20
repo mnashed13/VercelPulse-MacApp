@@ -27,12 +27,14 @@ public enum FilterScope: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Modern segmented pill bar for filtering deployments by scope.
+/// Liquid Glass segmented pill bar for filtering deployments by scope.
 public struct FilterScopeBar: View {
     @Binding public var selectedScope: FilterScope
     public var allCount: Int
     public var prodCount: Int
     public var prevCount: Int
+    
+    @Namespace private var selectionNamespace
     
     public init(
         selectedScope: Binding<FilterScope>,
@@ -47,20 +49,15 @@ public struct FilterScopeBar: View {
     }
     
     public var body: some View {
-        HStack(spacing: 6) {
-            ForEach(FilterScope.allCases) { scope in
-                scopePill(for: scope)
+        GlassEffectContainer(spacing: 4) {
+            HStack(spacing: 3) {
+                ForEach(FilterScope.allCases) { scope in
+                    scopePill(for: scope)
+                }
             }
+            .padding(3)
+            .glassEffect(.regular, in: .capsule)
         }
-        .padding(3)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(NSColor.controlBackgroundColor).opacity(0.8))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        )
     }
     
     @ViewBuilder
@@ -69,40 +66,46 @@ public struct FilterScopeBar: View {
         let count = countForScope(scope)
         
         Button(action: {
-            withAnimation(.easeInOut(duration: 0.18)) {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                 selectedScope = scope
             }
         }) {
             HStack(spacing: 4) {
                 Image(systemName: scope.iconName)
-                    .font(.system(size: 10, weight: isSelected ? .bold : .medium))
-                    .foregroundColor(iconColor(for: scope, isSelected: isSelected))
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(iconColor(for: scope, isSelected: isSelected))
                 
                 Text(scope.title)
-                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? .primary : .secondary)
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+                    .lineLimit(1)
                 
                 Text("\(count)")
-                    .font(.system(size: 10, weight: isSelected ? .bold : .medium))
+                    .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
                     .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
+                    .padding(.vertical, 1.5)
                     .background(
                         Capsule()
                             .fill(badgeBackgroundColor(for: scope, isSelected: isSelected))
                     )
-                    .foregroundColor(badgeTextColor(for: scope, isSelected: isSelected))
+                    .foregroundStyle(badgeTextColor(for: scope, isSelected: isSelected))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5.5)
             .padding(.horizontal, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? Color(NSColor.selectedControlColor).opacity(0.2) : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(isSelected ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
-            )
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(.clear)
+                        .glassEffect(
+                            .regular.tint(selectionTint(for: scope)).interactive(),
+                            in: .capsule
+                        )
+                        .glassEffectID("active-scope-pill", in: selectionNamespace)
+                }
+            }
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -112,6 +115,14 @@ public struct FilterScopeBar: View {
         case .all: return allCount
         case .production: return prodCount
         case .preview: return prevCount
+        }
+    }
+    
+    private func selectionTint(for scope: FilterScope) -> Color {
+        switch scope {
+        case .all: return Color.primary.opacity(0.08)
+        case .production: return Color.purple.opacity(0.18)
+        case .preview: return Color.blue.opacity(0.18)
         }
     }
     
@@ -128,11 +139,11 @@ public struct FilterScopeBar: View {
         if isSelected {
             switch scope {
             case .all: return Color.primary.opacity(0.12)
-            case .production: return Color.purple.opacity(0.2)
-            case .preview: return Color.blue.opacity(0.2)
+            case .production: return Color.purple.opacity(0.22)
+            case .preview: return Color.blue.opacity(0.22)
             }
         } else {
-            return Color.primary.opacity(0.06)
+            return Color.primary.opacity(0.07)
         }
     }
     
