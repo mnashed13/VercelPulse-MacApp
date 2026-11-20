@@ -41,7 +41,7 @@ public enum ErrorBannerType: Equatable {
     }
 }
 
-/// Categorized error banner displaying actionable guidance for 401, 429, offline, and generic API errors.
+/// Categorized Liquid Glass error banner displaying actionable guidance for 401, 429, offline, and generic API errors.
 public struct ErrorBannerView: View {
     public let errorType: ErrorBannerType
     public var onRetry: (() -> Void)?
@@ -80,22 +80,25 @@ public struct ErrorBannerView: View {
     }
     
     public var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            // Error icon
-            Image(systemName: iconName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(accentColor)
-                .frame(width: 20)
+        HStack(alignment: .center, spacing: 9) {
+            // Error icon badge
+            ZStack {
+                Image(systemName: iconName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(accentColor)
+            }
+            .frame(width: 26, height: 26)
+            .glassEffect(.regular.tint(accentColor.opacity(0.2)), in: .circle)
             
             // Text info
             VStack(alignment: .leading, spacing: 2) {
                 Text(titleText)
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
                 
                 Text(messageText)
                     .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             
@@ -108,21 +111,20 @@ public struct ErrorBannerView: View {
             if let onDismiss = onDismiss {
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .padding(4)
+                        .font(.system(size: 8.5, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
+                .liquidGlassCircleControl()
             }
         }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(accentColor.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(accentColor.opacity(0.3), lineWidth: 1)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .glassEffect(
+            .regular.tint(accentColor.opacity(0.18)),
+            in: .rect(cornerRadius: 14)
         )
     }
     
@@ -135,43 +137,40 @@ public struct ErrorBannerView: View {
             if let onReauthenticate = onReauthenticate {
                 Button(action: onReauthenticate) {
                     Text("Sign In")
-                        .font(.system(size: 10, weight: .bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
+                        .font(.system(size: 10, weight: .semibold))
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(.white)
                 }
                 .buttonStyle(.plain)
+                .liquidGlassControl(tint: accentColor)
             } else if let onOpenSettings = onOpenSettings {
                 Button(action: onOpenSettings) {
                     Text("Settings")
-                        .font(.system(size: 10, weight: .bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
+                        .font(.system(size: 10, weight: .semibold))
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(.white)
                 }
                 .buttonStyle(.plain)
+                .liquidGlassControl(tint: accentColor)
             }
             
         case .rateLimited, .networkOffline, .serverError:
             if let onRetry = onRetry {
                 Button(action: onRetry) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.system(size: 8.5, weight: .bold))
                         Text("Retry")
                             .font(.system(size: 10, weight: .semibold))
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(accentColor.opacity(0.2))
-                    .foregroundColor(accentColor)
-                    .cornerRadius(4)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .foregroundStyle(accentColor)
                 }
                 .buttonStyle(.plain)
+                .liquidGlassControl(tint: accentColor.opacity(0.22))
             }
             
         case .forbidden:
@@ -179,13 +178,12 @@ public struct ErrorBannerView: View {
                 Button(action: onOpenSettings) {
                     Text("Settings")
                         .font(.system(size: 10, weight: .semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(accentColor.opacity(0.2))
-                        .foregroundColor(accentColor)
-                        .cornerRadius(4)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(accentColor)
                 }
                 .buttonStyle(.plain)
+                .liquidGlassControl(tint: accentColor.opacity(0.22))
             }
             
         case .generic:
@@ -193,13 +191,12 @@ public struct ErrorBannerView: View {
                 Button(action: onRetry) {
                     Text("Retry")
                         .font(.system(size: 10, weight: .semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(accentColor.opacity(0.2))
-                        .foregroundColor(accentColor)
-                        .cornerRadius(4)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(accentColor)
                 }
                 .buttonStyle(.plain)
+                .liquidGlassControl(tint: accentColor.opacity(0.22))
             }
         }
     }

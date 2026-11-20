@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Modern, rich deployment card view displaying lifecycle status, Git metadata, and deep link actions.
+/// Liquid Glass deployment card displaying lifecycle status, Git metadata, and interactive glass actions.
 public struct DeploymentCardView: View {
     public let deployment: Deployment
     public var teamSlug: String?
@@ -22,20 +22,21 @@ public struct DeploymentCardView: View {
     
     public var body: some View {
         HStack(spacing: 0) {
-            // Status accent bar on the leading edge
-            RoundedRectangle(cornerRadius: 1.5)
+            // Subtle luminous status accent bar on the leading edge
+            Capsule()
                 .fill(deployment.status.color)
                 .frame(width: 3.5)
-                .padding(.vertical, 4)
-                .padding(.leading, 3)
-                .opacity(deployment.status == .ready ? 0.75 : 1.0)
+                .padding(.vertical, 8)
+                .padding(.leading, 5)
+                .opacity(deployment.status == .ready ? 0.8 : 1.0)
+                .shadow(color: deployment.status.color.opacity(0.45), radius: 3, x: 0, y: 0)
             
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: 8) {
                 // MARK: - Top Row: Project Name + Target Pill + State Badge
                 HStack(alignment: .center, spacing: 6) {
                     Text(deployment.name)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.primary)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     
@@ -46,29 +47,35 @@ public struct DeploymentCardView: View {
                     stateBadge
                 }
                 
-                // MARK: - Middle Row: Branch + Commit Info
-                VStack(alignment: .leading, spacing: 3) {
+                // MARK: - Middle Row: Branch Pill + Commit Info
+                VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.triangle.branch")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 9.5, weight: .semibold))
+                            .foregroundStyle(.secondary)
                         
                         Text(branchName)
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .foregroundColor(.primary.opacity(0.85))
+                            .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.primary.opacity(0.9))
                             .lineLimit(1)
                         
                         if let sha = deployment.meta?.shortSha {
                             Text("@\(sha)")
                                 .font(.system(size: 10, weight: .regular, design: .monospaced))
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(
+                        Capsule()
+                            .fill(Color.primary.opacity(0.06))
+                    )
                     
                     if let commit = commitMessage {
                         Text(commit)
                             .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -77,61 +84,55 @@ public struct DeploymentCardView: View {
                 // MARK: - In-Progress / Failed State Banner
                 buildStateBanner
                 
-                // MARK: - Bottom Row: Author + Timestamp + Duration + Action Buttons
+                // MARK: - Bottom Row: Author + Timestamp + Liquid Glass Action Pills
                 HStack(alignment: .center, spacing: 5) {
-                    // Author info
                     HStack(spacing: 3) {
                         Image(systemName: "person.circle")
                             .font(.system(size: 10))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Text(authorName)
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
-                    .frame(maxWidth: 80, alignment: .leading)
+                    .frame(maxWidth: 76, alignment: .leading)
                     
                     Text("•")
                         .font(.system(size: 9))
-                        .foregroundColor(.secondary.opacity(0.5))
+                        .foregroundStyle(.tertiary)
                     
-                    // Timestamp & Duration
-                    HStack(spacing: 2) {
+                    HStack(spacing: 2.5) {
                         Image(systemName: "clock")
                             .font(.system(size: 9))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Text(deployment.relativeCreatedTime)
                             .font(.system(size: 10))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
                     
                     Spacer(minLength: 4)
                     
-                    // Action Buttons
                     actionButtons
                 }
             }
-            .padding(.leading, 7)
-            .padding(.trailing, 9)
-            .padding(.vertical, 8)
+            .padding(.leading, 9)
+            .padding(.trailing, 11)
+            .padding(.vertical, 10)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(NSColor.controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(
-                    statusBorderColor,
-                    lineWidth: deployment.status.isInProgress ? 1.5 : 1
-                )
+        .liquidGlassCard(
+            cornerRadius: 16,
+            tint: cardTintColor,
+            borderColor: statusBorderColor,
+            borderWidth: deployment.status.isInProgress ? 1.25 : 0.85,
+            isHovered: isHovered
         )
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.easeInOut(duration: 0.16)) {
                 isHovered = hovering
             }
         }
@@ -139,18 +140,25 @@ public struct DeploymentCardView: View {
     
     // MARK: - Subviews
     
+    private var cardTintColor: Color? {
+        if deployment.status.isInProgress || deployment.status.isFailed {
+            return deployment.status.color
+        }
+        return nil
+    }
+    
     private var statusBorderColor: Color {
         let status = deployment.status
         if isHovered {
-            return status.color.opacity(0.45)
+            return status.color.opacity(0.55)
         }
         if status.isInProgress {
-            return status.color.opacity(0.35)
+            return status.color.opacity(0.42)
         }
         if status.isFailed {
-            return status.color.opacity(0.3)
+            return status.color.opacity(0.36)
         }
-        return Color.primary.opacity(0.08)
+        return Color.white.opacity(0.24)
     }
     
     @ViewBuilder
@@ -160,27 +168,27 @@ public struct DeploymentCardView: View {
             HStack(spacing: 6) {
                 if status == .building {
                     ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 10, height: 10)
+                        .scaleEffect(0.52)
+                        .frame(width: 11, height: 11)
                     Text("Building deployment in progress...")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(status.color)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(status.color)
                         .lineLimit(1)
                 } else if status == .queued {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(status.color)
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundStyle(status.color)
                     Text("Queued in build pipeline...")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(status.color)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(status.color)
                         .lineLimit(1)
                 } else {
                     Image(systemName: "hourglass")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(status.color)
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundStyle(status.color)
                     Text("Initializing deployment...")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(status.color)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(status.color)
                         .lineLimit(1)
                 }
                 
@@ -188,50 +196,58 @@ public struct DeploymentCardView: View {
                 
                 if let duration = deployment.durationFormatted {
                     Text(duration)
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(status.color.opacity(0.85))
+                        .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(status.color.opacity(0.9))
                         .lineLimit(1)
                 }
             }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3.5)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4.5)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(status.color.opacity(0.1))
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(status.color.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(status.color.opacity(0.22), lineWidth: 0.75)
             )
         } else if status == .error {
             HStack(spacing: 5) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.red)
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundStyle(.red)
                 Text("Build failed • Inspect logs for details")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.red)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.red)
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3.5)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4.5)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.red.opacity(0.09))
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.red.opacity(0.11))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color.red.opacity(0.22), lineWidth: 0.75)
             )
         } else if status == .canceled {
             HStack(spacing: 5) {
                 Image(systemName: "slash.circle.fill")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundStyle(.secondary)
                 Text("Build canceled • Deployment stopped")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3.5)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4.5)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.secondary.opacity(0.09))
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.secondary.opacity(0.1))
             )
         }
     }
@@ -240,24 +256,32 @@ public struct DeploymentCardView: View {
     private var targetPill: some View {
         if deployment.isProduction {
             Text("PROD")
-                .font(.system(size: 9, weight: .bold))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1.5)
+                .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
                 .background(
                     Capsule()
-                        .fill(Color.purple.opacity(0.18))
+                        .fill(Color.purple.opacity(0.16))
                 )
-                .foregroundColor(Color.purple)
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.purple.opacity(0.28), lineWidth: 0.6)
+                )
+                .foregroundStyle(.purple)
         } else {
             Text("PREV")
-                .font(.system(size: 9, weight: .bold))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1.5)
+                .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
                 .background(
                     Capsule()
-                        .fill(Color.blue.opacity(0.15))
+                        .fill(Color.blue.opacity(0.14))
                 )
-                .foregroundColor(Color.blue)
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.blue.opacity(0.25), lineWidth: 0.6)
+                )
+                .foregroundStyle(.blue)
         }
     }
     
@@ -267,7 +291,7 @@ public struct DeploymentCardView: View {
         HStack(spacing: 3.5) {
             if status == .building {
                 ProgressView()
-                    .scaleEffect(0.5)
+                    .scaleEffect(0.48)
                     .frame(width: 10, height: 10)
             } else if status == .queued {
                 Image(systemName: "clock.arrow.circlepath")
@@ -278,39 +302,59 @@ public struct DeploymentCardView: View {
             }
             
             Text(status.displayName.uppercased())
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 8.5, weight: .bold, design: .rounded))
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 2.5)
         .background(
             Capsule()
-                .fill(status.color.opacity(0.16))
+                .fill(status.color.opacity(0.15))
         )
-        .foregroundColor(status.color)
+        .overlay(
+            Capsule()
+                .strokeBorder(status.color.opacity(0.28), lineWidth: 0.6)
+        )
+        .foregroundStyle(status.color)
     }
     
     @ViewBuilder
     private var actionButtons: some View {
-        HStack(spacing: 4) {
-            // Copy URL button
-            Button(action: copyDeploymentURL) {
-                Image(systemName: hasCopied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 10))
-                    .foregroundColor(hasCopied ? .green : .secondary)
-                    .frame(width: 20, height: 20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.primary.opacity(0.05))
-                    )
-            }
-            .buttonStyle(.plain)
-            .help("Copy Deployment URL")
-            
-            // Preview Web App button (Active when READY, disabled when building/failed)
-            if deployment.status.isLive, let previewURL = VercelDeepLinkHelper.previewURL(for: deployment) {
-                Button(action: {
-                    VercelDeepLinkHelper.openInBrowser(previewURL)
-                }) {
+        GlassEffectContainer(spacing: 4) {
+            HStack(spacing: 4) {
+                // Copy URL button
+                Button(action: copyDeploymentURL) {
+                    Image(systemName: hasCopied ? "checkmark" : "doc.on.doc")
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundStyle(hasCopied ? .green : .secondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .liquidGlassCircleControl(tint: hasCopied ? Color.green.opacity(0.2) : nil)
+                .help("Copy Deployment URL")
+                
+                // Preview Web App button (Active when READY, muted when building/failed)
+                if deployment.status.isLive, let previewURL = VercelDeepLinkHelper.previewURL(for: deployment) {
+                    Button(action: {
+                        VercelDeepLinkHelper.openInBrowser(previewURL)
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "eye")
+                                .font(.system(size: 9, weight: .semibold))
+                            Text("Preview")
+                                .font(.system(size: 10, weight: .semibold))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(.primary)
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .liquidGlassControl()
+                    .help("Open Live Preview")
+                } else {
                     HStack(spacing: 3) {
                         Image(systemName: "eye")
                             .font(.system(size: 9))
@@ -319,62 +363,42 @@ public struct DeploymentCardView: View {
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: false)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2.5)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                     .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.primary.opacity(0.06))
+                        Capsule()
+                            .fill(Color.primary.opacity(0.03))
                     )
-                    .foregroundColor(.primary.opacity(0.9))
+                    .foregroundStyle(.tertiary)
+                    .help(previewUnavailableHelpText)
+                }
+                
+                // Inspect in Vercel Dashboard button
+                Button(action: {
+                    let dashboardURL = VercelDeepLinkHelper.webDashboardURL(
+                        for: deployment,
+                        teamSlug: teamSlug,
+                        username: username
+                    )
+                    VercelDeepLinkHelper.openInBrowser(dashboardURL)
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text("Inspect")
+                            .font(.system(size: 10, weight: .semibold))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .foregroundStyle(inspectButtonForegroundColor)
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .help("Open Live Preview")
-            } else {
-                HStack(spacing: 3) {
-                    Image(systemName: "eye")
-                        .font(.system(size: 9))
-                    Text("Preview")
-                        .font(.system(size: 10, weight: .medium))
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2.5)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.primary.opacity(0.02))
-                )
-                .foregroundColor(.secondary.opacity(0.35))
-                .help(previewUnavailableHelpText)
+                .liquidGlassControl(tint: inspectButtonGlassTint)
+                .help(inspectButtonHelpText)
             }
-            
-            // Inspect in Vercel Dashboard button (Highlighted when building/queued/error)
-            Button(action: {
-                let dashboardURL = VercelDeepLinkHelper.webDashboardURL(
-                    for: deployment,
-                    teamSlug: teamSlug,
-                    username: username
-                )
-                VercelDeepLinkHelper.openInBrowser(dashboardURL)
-            }) {
-                HStack(spacing: 3) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 9, weight: deployment.status.isInProgress || deployment.status.isFailed ? .semibold : .medium))
-                    Text("Inspect")
-                        .font(.system(size: 10, weight: deployment.status.isInProgress || deployment.status.isFailed ? .semibold : .medium))
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2.5)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(inspectButtonBackgroundColor)
-                )
-                .foregroundColor(inspectButtonForegroundColor)
-            }
-            .buttonStyle(.plain)
-            .help(inspectButtonHelpText)
         }
     }
     
@@ -395,15 +419,15 @@ public struct DeploymentCardView: View {
         }
     }
     
-    private var inspectButtonBackgroundColor: Color {
+    private var inspectButtonGlassTint: Color {
         let status = deployment.status
         if status.isInProgress {
-            return status.color.opacity(0.18)
+            return status.color.opacity(0.24)
         }
         if status.isFailed {
-            return Color.red.opacity(0.18)
+            return Color.red.opacity(0.24)
         }
-        return Color.accentColor.opacity(0.12)
+        return Color.accentColor.opacity(0.16)
     }
     
     private var inspectButtonForegroundColor: Color {

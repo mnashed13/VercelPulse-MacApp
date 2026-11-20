@@ -1,0 +1,212 @@
+name: Release macOS App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type (auto detects from PR labels / conventional commits)"
+        required: true
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & Publish macOS Release
+    runs-on: macos-26
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine next semantic version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_BUMP: ${{ github.event.inputs.bump || 'auto' }}
+        run: |
+          set -euo pipefail
+
+          # Skip if HEAD is already tagged with a release version
+          EXISTING_TAG=$(git tag --points-at HEAD 'v*.*.*' | head -n 1 || true)
+          if [ -n "$EXISTING_TAG" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "Commit is already tagged as $EXISTING_TAG. Skipping release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+          # Find the latest semantic version tag (default to v1.0.0)
+          LATEST_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | head -n 1 || true)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v1.0.0"
+          fi
+
+          CLEAN_VER="${LATEST_TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CLEAN_VER"
+          MAJOR="${MAJOR:-1}"
+          MINOR="${MINOR:-0}"
+          PATCH="${PATCH:-0}"
+
+          BUMP="$INPUT_BUMP"
+          if [ "$BUMP" = "auto" ]; then
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            PR_LABELS=""
+            PR_TITLE=""
+
+            # Inspect merged PR metadata associated with this commit (if any)
+            PR_JSON=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" 2>/dev/null || echo "[]")
+            if [ "$PR_JSON" != "[]" ] && [ -n "$PR_JSON" ]; then
+              PR_LABELS=$(echo "$PR_JSON" | jq -r '.[0].labels[].name // empty' | tr '[:upper:]' '[:lower:]' || true)
+              PR_TITLE=$(echo "$PR_JSON" | jq -r '.[0].title // empty' || true)
+            fi
+
+            COMBINED_TEXT="${PR_TITLE}"$'\n'"${COMMIT_MSG}"
+
+            if echo "$PR_LABELS" | grep -Eq '^(major|breaking|breaking-change)$' || \
+               echo "$COMBINED_TEXT" | grep -Eq 'BREAKING CHANGE|^[a-z]+(\([^)]+\))?!:'; then
+              BUMP="major"
+            elif echo "$PR_LABELS" | grep -Eq '^(minor|feature|enhancement|feat)$' || \
+                 echo "$COMBINED_TEXT" | grep -Eiq '^feat(\([^)]+\))?:'; then
+              BUMP="minor"
+            else
+              BUMP="patch"
+            fi
+          fi
+
+          case "$BUMP" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          NEXT_TAG="v${NEXT_VERSION}"
+
+          echo "Previous tag: $LATEST_TAG"
+          echo "Bump type:    $BUMP"
+          echo "Next version: $NEXT_TAG"
+
+          echo "previous_tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${NEXT_TAG}" >> "$GITHUB_OUTPUT"
+          echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Run unit tests
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          xcodebuild test \
+            -project VercelPulse.xcodeproj \
+            -scheme VercelPulse \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build Release macOS App
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER="${{ github.run_number }}"
+
+          xcodebuild build \
+            -project VercelPulse.xcodeproj \
+            -scheme VercelPulse \
+            -configuration Release \
+            -derivedDataPath build/DerivedData \
+            MARKETING_VERSION="${VERSION}" \
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+          APP_PATH="build/DerivedData/Build/Products/Release/VercelPulse.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: Built VercelPulse.app not found at $APP_PATH"
+            exit 1
+          fi
+
+          # Ad-hoc sign the bundle so Gatekeeper/macOS launches cleanly
+          codesign --force --deep --sign - "$APP_PATH"
+          codesign --verify --verbose "$APP_PATH"
+
+      - name: Package .zip and .dmg artifacts
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          APP_PATH="build/DerivedData/Build/Products/Release/VercelPulse.app"
+          DIST_DIR="dist"
+          mkdir -p "$DIST_DIR"
+
+          # 1. Create versioned ZIP + stable latest ZIP
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "${DIST_DIR}/VercelPulse-${TAG}-macOS.zip"
+          cp "${DIST_DIR}/VercelPulse-${TAG}-macOS.zip" "${DIST_DIR}/VercelPulse.zip"
+
+          # 2. Create drag-to-Applications DMG
+          DMG_STAGING="build/dmg-staging"
+          rm -rf "$DMG_STAGING"
+          mkdir -p "$DMG_STAGING"
+          cp -R "$APP_PATH" "$DMG_STAGING/"
+          ln -s /Applications "$DMG_STAGING/Applications"
+
+          hdiutil create \
+            -volname "VercelPulse ${TAG}" \
+            -srcfolder "$DMG_STAGING" \
+            -ov \
+            -format UDZO \
+            "${DIST_DIR}/VercelPulse-${TAG}-macOS.dmg"
+
+          # 3. Generate SHA-256 checksums
+          (cd "$DIST_DIR" && shasum -a 256 "VercelPulse-${TAG}-macOS.dmg" "VercelPulse-${TAG}-macOS.zip" > SHA256SUMS.txt)
+          ls -lh "$DIST_DIR"
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: VercelPulse ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          make_latest: true
+          body: |
+            ## VercelPulse ${{ steps.version.outputs.tag }}
+
+            ### Installation
+            1. Download **`VercelPulse-${{ steps.version.outputs.tag }}-macOS.dmg`** (or the `.zip` archive) below.
+            2. Open the disk image and drag **VercelPulse.app** into your **Applications** folder.
+            3. Launch **VercelPulse** — the official Vercel triangle icon will appear in your macOS menu bar.
+
+            > **Note:** Because this build is ad-hoc signed, on first launch right-click **VercelPulse.app** → **Open** (or allow it in *System Settings → Privacy & Security*).
+          files: |
+            dist/VercelPulse-${{ steps.version.outputs.tag }}-macOS.dmg
+            dist/VercelPulse-${{ steps.version.outputs.tag }}-macOS.zip
+            dist/VercelPulse.zip
+            dist/SHA256SUMS.txt
